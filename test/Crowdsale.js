@@ -88,6 +88,32 @@ describe('Crowdsale',()=>{
         
     })
 
+    describe('Sending eth',()=>{
+        let transaction, result
+        let amount = ether(10)
+
+        describe('Success',()=>{
+
+            beforeEach( async()=> {
+                transaction = await user1.sendTransaction({to:crowdsale.address, value : amount})
+                result = await transaction.wait()
+            })
+
+            it('Updates contracts ether balance', async()=>{
+                expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(amount)
+            })
+
+            it('Updates Updates token balance', async()=>{
+                expect(await token.balanceOf(user1.address)).to.equal(amount)
+            })
+
+            
+
+            
+        })
+    })
+
+
    
 
         
