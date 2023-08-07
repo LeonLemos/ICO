@@ -106,10 +106,69 @@ describe('Crowdsale',()=>{
             it('Updates Updates token balance', async()=>{
                 expect(await token.balanceOf(user1.address)).to.equal(amount)
             })
-
             
+        })
+    })
 
-            
+    describe('Update price',()=>{
+        let transaction, result
+        let price = ether(2)
+
+        describe('Success',()=>{
+            beforeEach(async() => {
+                transaction = await crowdsale.connect(deployer).setPrice(ether(2))
+                result = await transaction.wait()
+            })
+            it("Updates Price", async()=>{
+                expect(await crowdsale.price()).to.equal(ether(2))
+            })
+        }) 
+
+        describe('Failure',()=>{
+            it('Prevents non-owner from updating price',async()=>{
+                await expect(crowdsale.connect(user1).setPrice(price)).to.be.reverted
+            })
+        })
+    })
+
+    describe('Finalize the sale',()=>{
+        let transaction,result
+        let amount = tokens(10)
+        let value = ether(10)
+
+        describe('Success',()=>{
+            beforeEach(async()=>{
+                transaction = await crowdsale.connect(user1).buyTokens(amount,{value:value})
+                result = await transaction.wait()
+
+                transaction = await crowdsale.connect(deployer).finalize()
+                result = await transaction.wait()
+            })
+
+            it('Transfer remaining tokens to owner',async ()=>{
+                expect(await token.balanceOf(crowdsale.address)).to.equal(0)
+                expect(await token.balanceOf(deployer.address)).to.be.equal(tokens(999990))
+            })
+
+            it('Transfer Eth balance to ownner',async()=>{
+                expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(0)
+            })
+
+            it('Emits Finalize event',async()=>[
+                await expect(transaction).to.emit(crowdsale,'Finalize').withArgs(amount, value)
+
+            ])
+
+        })
+
+        describe('Failure',()=>{
+
+            it('Prevents non-owner from finalizing',async()=>{
+                await expect(crowdsale.connect(user1).finalize()).to.be.reverted
+            })
+
+
+
         })
     })
 
